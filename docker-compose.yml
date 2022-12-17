@@ -1,0 +1,53 @@
+---
+version: "3.9"
+services:
+  builder:
+    container_name: builder
+    build:
+      context: .
+      dockerfile: Dockerfile.builder
+      args:
+        - HOST=mariadb
+        - USER=catware
+        - DATABASE=db
+        - PASSWORD=${DATABASE_PASSWORD}
+    volumes:
+      - type: volume
+        source: webapps
+        target: /webapps
+  
+  mariadb:
+    image: linuxserver/mariadb:10.6.9
+    container_name: mariadb
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Moscow
+      - MYSQL_DATABASE=db
+      - MYSQL_USER=catware
+      - MYSQL_ROOT_PASSWORD=${ROOT_ACCESS_PASSWORD}
+      - MYSQL_PASSWORD=${DATABASE_PASSWORD}
+    healthcheck:
+      test: mysqladmin ping -p${ROOT_ACCESS_PASSWORD}
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+  
+  tomcat:
+    container_name: tomcat
+    build:
+      context: .
+      dockerfile: Dockerfile.tomcat
+    volumes:
+      - type: volume
+        source: webapps
+        target: /opt/tomcat/webapps/
+    ports:
+      - '8080:8080'
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+volumes:
+  webapps:
