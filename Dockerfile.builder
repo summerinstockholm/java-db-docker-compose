@@ -1,6 +1,6 @@
-FROM maven:openjdk:18-jdk-slim
-RUN apt update && \
-    apt install git
+FROM maven:3.8-eclipse-temurin-11-alpine
+RUN apk update && \
+    apk add git
 ARG USER PASSWORD HOST DATABASE
 ENV REPO_DIR=repo \
     REPO=https://github.com/shephertz/App42PaaS-Java-MySQL-Sample.git \
@@ -16,6 +16,6 @@ app42.paas.db.password = $PASSWORD\n\
 app42.paas.db.ip = $HOST\n\
 app42.paas.db.name = $DATABASE\n\
 " > $CONF_FILE
-RUN mvn package
+RUN mvn clean package
 CMD rm -rf /webapps/ROOT* && \
     cp target/*.war /webapps/ROOT.war
